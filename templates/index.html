@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKF Assignment</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<body>
+<div class="content">
+    {% if submitted %}
+        <form method="GET">
+            <button type="submit">Back</button>
+        </form>
+        <h2>Retrieved Indices:</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Index Name</th>
+                <th>Size (in bytes)</th>
+            </tr>
+            </thead>
+            {% if indices %}
+                {% for index in indices %}
+                <tr>
+                    <td>{{ index.name }}</td>
+                    <td>{{ index.size_in_bytes }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="2">No indices found.</td>
+                </tr>
+            {% endif %}
+        </table>
+
+    {% else %}
+        <!-- Display Flash Error Messages -->
+        {% with messages = get_flashed_messages(with_categories=false) %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="errors">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+    <h1>Enter a Number</h1>
+        <form method="POST">
+            <input type="number" name="num_indices" min="0" placeholder="Enter a number">
+            <button type="submit">Submit</button>
+        </form>
+    {% endif %}
+</div>
+</body>
+</html>
