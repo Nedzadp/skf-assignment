@@ -1,0 +1,145 @@
+# Assuming we already have defined secrets $AWS_ACCOUNT_ID, $AWS_ACCESS_KEY, $AWS_SECRET_KEY, $ECR_DEV_REGISTRY, AWS_DEV_REGION, ECR_DEV_REPO
+
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: dev
+    displayName: 'Deploy to Dev'
+    jobs:
+      - job: dev_job
+        displayName: 'terraform init & apply in Dev'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: 'latest'
+
+          - script: |
+              terraform init -backend-config="backend-dev.config"
+            displayName: 'Terraform Init (Dev)'
+
+          - script: |
+              terraform apply -auto-approve
+            displayName: 'Terraform Apply (Dev)'
+
+          - script: |
+              docker build -t flask-app .
+            displayName: 'Build Docker Image (Dev)'
+
+          - script: |
+              aws ecr get-login-password --region $(AWS_DEV_REGION) | docker login --username AWS --password-stdin $(ECR_DEV_REGISTRY)
+              docker tag flask-app $(ECR_DEV_REGISTRY)/$(ECR_DEV_REPO):latest
+              docker push $(ECR_DEV_REGISTRY)/$(ECR_DEV_REPO):latest
+            displayName: 'Push Docker Image to ECR (Dev)'
+
+  - stage: qa
+    displayName: 'Deploy to QA'
+    dependsOn: dev
+    jobs:
+      - job: qa_job
+        displayName: 'terraform init & apply in QA'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: 'latest'
+
+          - script: |
+              terraform init -backend-config="backend-qa.config"
+            displayName: 'Terraform Init (QA)'
+
+          - script: |
+              terraform apply -auto-approve
+            displayName: 'Terraform Apply (QA)'
+
+          - script: |
+              docker build -t flask-app .
+            displayName: 'Build Docker Image (QA)'
+
+          - script: |
+              aws ecr get-login-password --region $(AWS_QA_REGION) | docker login --username AWS --password-stdin $(ECR_QA_REGISTRY)
+              docker tag flask-app $(ECR_QA_REGISTRY)/$(ECR_QA_REPO):latest
+              docker push $(ECR_QA_REGISTRY)/$(ECR_QA_REPO):latest
+            displayName: 'Push Docker Image to ECR (QA)'
+
+  - stage: staging
+    displayName: 'Deploy to staging'
+    dependsOn: qa
+    jobs:
+      - job: staging_job
+        displayName: 'terraform init & apply in staging'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: 'latest'
+
+          - script: |
+              terraform init -backend-config="backend-stg.config"
+            displayName: 'Terraform Init (Staging)'
+
+          - script: |
+              terraform apply -auto-approve
+            displayName: 'Terraform Apply (Staging)'
+
+          - script: |
+              docker build -t flask-app .
+            displayName: 'Build Docker Image (Staging)'
+
+          - script: |
+              aws ecr get-login-password --region $(AWS_STG_REGION) | docker login --username AWS --password-stdin $(ECR_STG_REGISTRY)
+              docker tag flask-app $(ECR_STG_REGISTRY)/$(ECR_STG_REPO):latest
+              docker push $(ECR_STG_REGISTRY)/$(ECR_STG_REPO):latest
+            displayName: 'Push Docker Image to ECR (Staging)'
+
+  - stage: production
+    displayName: 'Deploy to Production'
+    dependsOn: staging
+    jobs:
+      - job: production_job
+        displayName: 'terraform init & apply in Production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: 'latest'
+
+          - script: |
+              terraform init -backend-config="backend-prod.config"
+            displayName: 'Terraform Init (Production)'
+
+          - script: |
+              terraform apply -auto-approve
+            displayName: 'Terraform Apply (Production)'
+
+          - script: |
+              docker build -t flask-app .
+            displayName: 'Build Docker Image (Production)'
+
+          - script: |
+              aws ecr get-login-password --region $(AWS_PROD_REGION) | docker login --username AWS --password-stdin $(ECR_PROD_REGISTRY)
+              docker tag flask-app $(ECR_PROD_REGISTRY)/$(ECR_PROD_REPO):latest
+              docker push $(ECR_PROD_REGISTRY)/$(ECR_PROD_REPO):latest
+            displayName: 'Push Docker Image to ECR (Production)'
+        dependsOn:
+          - staging_job
+        # Add an approval gate before applying changes to production
+        # Reviewers should manually approve the deployment to production
+        condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+
+  - approvals:
+      - name: Production Approval
+        displayName: 'Manual Approval to Deploy to Production'
+        status: pending
+        identityType: user
+        instructions: 'Please review and approve the deployment to Production.'
+        reviewerIds:
+          - $(PROD_APPROVER_ID_1)  # user id
+          - $(PROD_APPROVER_ID_2)  # user id

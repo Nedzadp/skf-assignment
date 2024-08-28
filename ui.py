@@ -22,7 +22,6 @@ def setup_routes(app):
         # If request method is POST on path '/' this means form is submitted
         if request.method == 'POST':
 
-
             try:
                 # To retrieve indices and size we could use cat indices API
                 # There is important message from Elasticsearch official documentation regarding cat indices API

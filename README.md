@@ -18,3 +18,17 @@ To setup development environment follow these steps:
 ```3_architecture_task``` contains diagram and description of task 3. Architecture Task: from the assignemnt
 
 ```4_infrastructure``` folder contains terraform code.
+
+## Environment variables
+
+Environment variables are defined in file ```.env```. This file contains information about elasticsearch server such as:
+url, username and password.
+
+## Running locally
+
+To run locally we need docker engine and docker compose plugin installed.
+In root folder of the project just execute:
+```docker compose up -build -d```
+This command will first build flask-app docker image from Dockerfile and also pull elasticsearch server docker image.
+Then it will start two containers in network: ```app``` and ```elasticsearch```. Application should be accessible via:
+```http://localhost:8082```
