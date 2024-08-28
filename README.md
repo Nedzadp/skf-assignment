@@ -19,6 +19,8 @@ To setup development environment follow these steps:
 
 ```4_infrastructure``` folder contains terraform code.
 
+```5_cicd``` contains explaination of task 5.
+
 ## Environment variables
 
 Environment variables are defined in file ```.env```. This file contains information about elasticsearch server such as:
