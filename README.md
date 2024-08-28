@@ -11,4 +11,10 @@ To setup development environment follow these steps:
 
 ## Project structure
 
-```app.py``` is a main entry point of application. 
+```app.py``` is a main entry point of application. ```ui.py``` is implementation of request methods POST, GET on path /.
+```.env``` defines env variables for Flask app and ```docker-compose.yml```.
+```dependencies.txt``` is used by ```Dockerfile``` when building docker image to first install all necessary dependencies.
+
+```3_architecture_task``` contains diagram and description of task 3. Architecture Task: from the assignemnt
+
+```4_infrastructure``` folder contains terraform code.

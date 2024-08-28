@@ -4,14 +4,15 @@ Written explanation of the diagram components, operation and dataflow:
 We need to make decision which region to use to deploy infrastructure.
 
 ### 1. ECR
-First step is to create ECR repository where we will store docker image of the app.
+First step is to create ECR repository where we will store docker image of the app. I also added lifecycle policy to retain only last two docker image.
 ### 2. VPC
-Then we create new VPC with at least two public subnets with different AZ to ensure high availability and fault tolerance of the resources.
+Then we create new VPC with three public subnets with different AZ to ensure high availability and fault tolerance of the resources.
 ### 3. ECS
 Next step is to create ECS cluster. After creation of ECS cluster we proceed with creation of task definition.
 Task definition will define which docker image to use from the ECR. That's why on diagram we can see arrow from task definition to ECR. Task definition execution role has a permission to get image from ECR.
+Also, cloud watch logging is enabled and log stream is created.
 Next step is to create ECS service. When defining ECS service we choose launch type FARGATE.
-Since we want our app running all the type we will setup application type to be service.
+Since we want our app running all the time we will setup application type to be service.
 In ECS service we will point to already created task definition.
 ECS service should select VPC and subnets created in step 1.
 In ECS service creation step we also define load balancer. New application load balancer is created and new target group is created.
